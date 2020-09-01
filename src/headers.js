@@ -37,6 +37,7 @@ exports.X_BCE_REQUEST_ID = 'x-bce-request-id';
 exports.X_BCE_CONTENT_SHA256 = 'x-bce-content-sha256';
 exports.X_BCE_OBJECT_ACL = 'x-bce-object-acl';
 exports.X_BCE_OBJECT_GRANT_READ = 'x-bce-object-grant-read';
+exports.X_BCE_STORAGE_CLASS = 'x-bce-storage-class';
 
 exports.X_HTTP_HEADERS = 'http_headers';
 exports.X_BODY = 'body';
