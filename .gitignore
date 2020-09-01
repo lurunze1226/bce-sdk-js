@@ -7,3 +7,4 @@ coverage
 index.html
 test.js
 test/sdk/BigBuckBunny_320x180.mp4
+.DS_Store
