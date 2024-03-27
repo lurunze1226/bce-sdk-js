@@ -57354,7 +57354,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":153}],411:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.1-beta.2",
+  "version": "1.0.1-beta.3",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -57384,11 +57384,13 @@ module.exports={
   ],
   "license": "MIT",
   "dependencies": {
+    "@nodelib/fs.walk": "^2.0.0",
     "async": "^3.2.5",
     "dayjs": "^1.11.10",
     "debug": "^3.1.0",
     "filesize": "^10.1.0",
     "lodash": "^4.17.21",
+    "process": "^0.11.10",
     "q": "^1.5.1",
     "underscore": "^1.9.1",
     "urlencode": "^1.1.0"
@@ -57404,15 +57406,12 @@ module.exports={
     "chalk": "^4.1.2",
     "coveralls": "^3.0.2",
     "expect.js": "^0.3.1",
-    "fs-walk": "0.0.2",
     "istanbul": "^0.4.5",
     "mocha": "^5.2.0",
-    "process": "^0.11.10",
     "rimraf": "^5.0.5",
     "uglify-js": "^3.17.4"
   }
 }
-
 },{}],412:[function(require,module,exports){
 "use strict";
 

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.1-beta.3
+
+- patch `process` package to dependencies
+
 ## 1.0.1-beta.2
 
 - BosClient: add `putSuperObject` API (encapsulation for mutipart upload)
