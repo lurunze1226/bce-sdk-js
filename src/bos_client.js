@@ -2092,4 +2092,106 @@ BosClient.prototype.putSuperObject = function (params) {
   return instance;
 };
 
+/**
+ * 创建bucket的合规保留策略，此时策略状态变成IN_PROGRESS状态
+ * @doc https://cloud.baidu.com/doc/BOS/s/Xkc4jkho7
+ */
+BosClient.prototype.initBucketObjectLock = function (bucketName, body, options) {
+  options = options || {};
+  body = u.pick(body || {}, ['retentionDays']);
+
+  if (!bucketName) {
+      throw new TypeError('bucketName should not be empty.');
+  }
+
+  if (!body.retentionDays) {
+      throw new TypeError('retentionDays should not be empty.');
+  }
+
+  return this.sendRequest('POST', {
+      bucketName: bucketName,
+      params: {objectlock: ''},
+      body: JSON.stringify(body),
+      config: options.config
+  });
+};
+
+/**
+ * 获取bucket的合规保留策略配置信息
+ * @doc https://cloud.baidu.com/doc/BOS/s/bkc4lq5mq
+ */
+BosClient.prototype.getBucketObjectLock = function (bucketName, options) {
+  options = options || {};
+
+  if (!bucketName) {
+      throw new TypeError('bucketName should not be empty.');
+  }
+
+  return this.sendRequest('GET', {
+      bucketName: bucketName,
+      params: {objectlock: ''},
+      config: options.config
+  });
+};
+
+/**
+ * 删除bucket设置的合规保留策略
+ * @doc https://cloud.baidu.com/doc/BOS/s/rkc4lrfw8
+ */
+BosClient.prototype.deleteBucketObjectLock = function (bucketName, options) {
+  options = options || {};
+
+  if (!bucketName) {
+      throw new TypeError('bucketName should not be empty.');
+  }
+
+  return this.sendRequest('DELETE', {
+      bucketName: bucketName,
+      params: {objectlock: ''},
+      config: options.config
+  });
+};
+
+/**
+ * 延长bucket的合规保留策略保护周期
+ * @doc https://cloud.baidu.com/doc/BOS/s/okc4ltaed
+ */
+BosClient.prototype.extendBucketObjectLock = function (bucketName, body, options) {
+  options = options || {};
+  body = u.pick(body || {}, ['extendRetentionDays']);
+
+  if (!bucketName) {
+      throw new TypeError('bucketName should not be empty.');
+  }
+
+  if (!body.extendRetentionDays) {
+      throw new TypeError('extendRetentionDays should not be empty.');
+  }
+
+  return this.sendRequest('POST', {
+      bucketName: bucketName,
+      params: {extendobjectlock: ''},
+      body: JSON.stringify(body),
+      config: options.config
+  });
+};
+
+/**
+ * 立即锁定bucket合规保留策略，变成LOCKED锁定状态，当合规保留策略处于LOCKED锁定时，任何人不可删除该策略，除非删除该Bucket。
+ * @doc https://cloud.baidu.com/doc/BOS/s/xkc4lsd70
+ */
+BosClient.prototype.completeBucketObjectLock = function (bucketName, options) {
+  options = options || {};
+
+  if (!bucketName) {
+      throw new TypeError('bucketName should not be empty.');
+  }
+
+  return this.sendRequest('POST', {
+      bucketName: bucketName,
+      params: {completeobjectlock: ''},
+      config: options.config
+  });
+};
+
 module.exports = BosClient;
