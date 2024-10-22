@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.0.3-beta.1
+
+_published on 2024-10-22_
+
+### BosClient
+
+- Add compliance retention related APIs
+
 ## 1.0.2
 
 _published on 2024-09-24_
