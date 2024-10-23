@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.0.3-beta.2
+
+_published on 2024-10-23_
+
+### BosClient
+
+- Fix endpoint is mistakenly set by virtual host config
+
 ## 1.0.3-beta.1
 
 _published on 2024-10-22_

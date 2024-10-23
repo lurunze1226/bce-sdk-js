@@ -57354,7 +57354,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":153}],411:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.1",
+  "version": "1.0.3-beta.2",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -63246,6 +63246,7 @@ var handleEndpoint = function handleEndpoint(_ref) {
   if (customGenerateUrl) {
     return customGenerateUrl(bucketName, region);
   }
+
   // 使用的是自定义域名 / virtual-host
   if (isCnameLikeHost(resolvedEndpoint) || cname_enabled) {
     // if virtual host endpoint and bucket is not empty, compatible bucket and endpoint
@@ -63254,13 +63255,13 @@ var handleEndpoint = function handleEndpoint(_ref) {
       resolvedEndpoint = replaceEndpointByBucket(bucketName, resolvedEndpoint);
     }
   } else {
-    // if this region is provided, generate base endpoint
-    if (region) {
-      resolvedEndpoint = generateBaseEndpoint(protocol, region);
-    }
     // 非ip/bns，pathStyleEnable不为true，强制转为pathStyle
     // 否则保持原状
     if (!pathStyleEnable && !isIpHost(resolvedEndpoint)) {
+      // if this region is provided, generate base endpoint
+      if (region) {
+        resolvedEndpoint = generateBaseEndpoint(protocol, region);
+      }
       // service级别的接口不需要转换
       if (bucketName && isBosHost(resolvedEndpoint)) {
         var _getDomainWithoutProt2 = getDomainWithoutProtocal(resolvedEndpoint),
