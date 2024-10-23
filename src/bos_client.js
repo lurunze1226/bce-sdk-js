@@ -1721,9 +1721,9 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   };
 
   var endpoint = this.config.endpoint;
+  
   const bucketName = varArgs.bucketName;
   const region = varArgs.config ? varArgs.config.region : this.config.region;
-
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
 
   const customGenerateUrl = varArgs.config && varArgs.config.customGenerateUrl

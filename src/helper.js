@@ -363,6 +363,8 @@ const handleEndpoint = function ({
   if (customGenerateUrl) {
     return customGenerateUrl(bucketName, region);
   }
+
+  
   // 使用的是自定义域名 / virtual-host
   if (isCnameLikeHost(resolvedEndpoint) || cname_enabled) {
     // if virtual host endpoint and bucket is not empty, compatible bucket and endpoint
@@ -372,13 +374,13 @@ const handleEndpoint = function ({
     }
   }
   else {
-    // if this region is provided, generate base endpoint
-    if (region) {
-      resolvedEndpoint = generateBaseEndpoint(protocol, region);
-    }
     // 非ip/bns，pathStyleEnable不为true，强制转为pathStyle
     // 否则保持原状
     if (!pathStyleEnable && !isIpHost(resolvedEndpoint)) {
+        // if this region is provided, generate base endpoint
+        if (region) {
+          resolvedEndpoint = generateBaseEndpoint(protocol, region);
+        }
         // service级别的接口不需要转换
         if (bucketName && isBosHost(resolvedEndpoint)) {
           const {protocol, host} = getDomainWithoutProtocal(resolvedEndpoint);
