@@ -57354,7 +57354,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":153}],411:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.2",
+  "version": "1.0.3-beta.3",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -61056,7 +61056,8 @@ BosClient.prototype.getBucketObjectLock = function (bucketName, options) {
     params: {
       objectlock: ''
     },
-    config: options.config
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -61074,7 +61075,8 @@ BosClient.prototype.deleteBucketObjectLock = function (bucketName, options) {
     params: {
       objectlock: ''
     },
-    config: options.config
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -61097,7 +61099,8 @@ BosClient.prototype.extendBucketObjectLock = function (bucketName, body, options
       extendobjectlock: ''
     },
     body: JSON.stringify(body),
-    config: options.config
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -61115,7 +61118,8 @@ BosClient.prototype.completeBucketObjectLock = function (bucketName, options) {
     params: {
       completeobjectlock: ''
     },
-    config: options.config
+    config: options.config,
+    headers: options.headers
   });
 };
 module.exports = BosClient;

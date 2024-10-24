@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.0.3-beta.3
+
+_published on 2024-10-24_
+
+### BosClient
+
+- Fix: Allow passing headers in the ObjectLock related APIs
+
 ## 1.0.3-beta.2
 
 _published on 2024-10-23_
