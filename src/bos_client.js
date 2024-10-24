@@ -1721,16 +1721,16 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   };
 
   var endpoint = this.config.endpoint;
-  
+
   const bucketName = varArgs.bucketName;
   const region = varArgs.config ? varArgs.config.region : this.config.region;
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
 
   const customGenerateUrl = varArgs.config && varArgs.config.customGenerateUrl
-    ? varArgs.config.customGenerateUrl
-    : this.config.customGenerateUrl
-      ? this.config.customGenerateUrl
-      : undefined;
+      ? varArgs.config.customGenerateUrl
+      : this.config.customGenerateUrl
+        ? this.config.customGenerateUrl
+          : undefined;
 
   // provide the method for generating url
   if (typeof customGenerateUrl === 'function') {
@@ -2130,7 +2130,8 @@ BosClient.prototype.getBucketObjectLock = function (bucketName, options) {
   return this.sendRequest('GET', {
       bucketName: bucketName,
       params: {objectlock: ''},
-      config: options.config
+      config: options.config,
+      headers: options.headers,
   });
 };
 
@@ -2148,7 +2149,8 @@ BosClient.prototype.deleteBucketObjectLock = function (bucketName, options) {
   return this.sendRequest('DELETE', {
       bucketName: bucketName,
       params: {objectlock: ''},
-      config: options.config
+      config: options.config,
+      headers: options.headers,
   });
 };
 
@@ -2172,7 +2174,8 @@ BosClient.prototype.extendBucketObjectLock = function (bucketName, body, options
       bucketName: bucketName,
       params: {extendobjectlock: ''},
       body: JSON.stringify(body),
-      config: options.config
+      config: options.config,
+      headers: options.headers,
   });
 };
 
@@ -2190,7 +2193,8 @@ BosClient.prototype.completeBucketObjectLock = function (bucketName, options) {
   return this.sendRequest('POST', {
       bucketName: bucketName,
       params: {completeobjectlock: ''},
-      config: options.config
+      config: options.config,
+      headers: options.headers,
   });
 };
 
