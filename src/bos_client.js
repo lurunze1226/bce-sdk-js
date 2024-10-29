@@ -2112,7 +2112,8 @@ BosClient.prototype.initBucketObjectLock = function (bucketName, body, options) 
       bucketName: bucketName,
       params: {objectlock: ''},
       body: JSON.stringify(body),
-      config: options.config
+      config: options.config,
+      headers: options.headers,
   });
 };
 
