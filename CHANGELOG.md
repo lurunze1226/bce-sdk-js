@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.0.3-beta.4
+
+_published on 2024-10-30_
+
+### BosClient
+
+- Feat: initBucketObjectLock support headers
+
 ## 1.0.3-beta.3
 
 _published on 2024-10-24_

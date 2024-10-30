@@ -57354,7 +57354,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":153}],411:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.3",
+  "version": "1.0.3-beta.4",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -61038,7 +61038,8 @@ BosClient.prototype.initBucketObjectLock = function (bucketName, body, options) 
       objectlock: ''
     },
     body: JSON.stringify(body),
-    config: options.config
+    config: options.config,
+    headers: options.headers
   });
 };
 
