@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.3-beta.5
+
+_published on 2024-12-02_
+
+- Chore: BosClient support `'x-bce-tagging'` header;
+
 ## 1.0.3-beta.4
 
 _published on 2024-10-30_

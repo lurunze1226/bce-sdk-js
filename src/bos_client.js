@@ -101,7 +101,7 @@ util.inherits(BosClient, BceBaseClient);
 /**
  * generate an authorization url with expire time and optional arguments
  * @param {string} bucketName the target bucket name
- * @param {string} key the target object name 
+ * @param {string} key the target object name
  * @param {*} timestamp a number representing timestamp in seconds
  * @param {*} expirationInSeconds expire time in seconds
  * @param {*} headers optional http request headers, default is empty
@@ -128,7 +128,7 @@ BosClient.prototype.generatePresignedUrl = function (
   // the endpoint provided in config, don't need to generate it by region
   endpoint = domainUtils.handleEndpoint({
     bucketName,
-    endpoint, 
+    endpoint,
     protocol: config.protocol,
     cname_enabled: config.cname_enabled,
     pathStyleEnable: config.pathStyleEnable,
@@ -1726,11 +1726,12 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   const region = varArgs.config ? varArgs.config.region : this.config.region;
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
 
-  const customGenerateUrl = varArgs.config && varArgs.config.customGenerateUrl
+  const customGenerateUrl =
+    varArgs.config && varArgs.config.customGenerateUrl
       ? varArgs.config.customGenerateUrl
       : this.config.customGenerateUrl
-        ? this.config.customGenerateUrl
-          : undefined;
+      ? this.config.customGenerateUrl
+      : undefined;
 
   // provide the method for generating url
   if (typeof customGenerateUrl === 'function') {
@@ -1738,23 +1739,17 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
     var resource =
       requestUrl ||
       path
-        .normalize(
-          path.join(
-            varArgs.removeVersionPrefix ? '/' : '/v1',
-            strings.normalize(varArgs.key || '', false)
-          )
-        )
+        .normalize(path.join(varArgs.removeVersionPrefix ? '/' : '/v1', strings.normalize(varArgs.key || '', false)))
         .replace(/\\/g, '/');
-  }
-  else {
+  } else {
     endpoint = domainUtils.handleEndpoint({
       bucketName,
-      endpoint, 
+      endpoint,
       region,
       protocol: this.config.protocol,
       cname_enabled: this.config.cname_enabled,
-      pathStyleEnable: this.config.pathStyleEnable,
-    })
+      pathStyleEnable: this.config.pathStyleEnable
+    });
 
     var resource =
       requestUrl ||
@@ -1789,7 +1784,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
 // };
 
 /**
- *  
+ *
  * @param {string} httpMethod GET,POST,PUT,DELETE,HEAD
  * @param {string} resource The http request path.
  * @param {Object} args The request info.
@@ -1929,7 +1924,8 @@ BosClient.prototype._prepareObjectHeaders = function (options) {
     H.X_BCE_FETCH_REFERER,
     H.X_BCE_FETCH_USER_AGENT,
     H.X_BCE_PROCESS,
-    H.X_BCE_SOURCE
+    H.X_BCE_SOURCE,
+    H.X_BCE_TAGGING
   ];
   var metaSize = 0;
   var headers = u.pick(options, function (value, key) {
@@ -2101,19 +2097,19 @@ BosClient.prototype.initBucketObjectLock = function (bucketName, body, options) 
   body = u.pick(body || {}, ['retentionDays']);
 
   if (!bucketName) {
-      throw new TypeError('bucketName should not be empty.');
+    throw new TypeError('bucketName should not be empty.');
   }
 
   if (!body.retentionDays) {
-      throw new TypeError('retentionDays should not be empty.');
+    throw new TypeError('retentionDays should not be empty.');
   }
 
   return this.sendRequest('POST', {
-      bucketName: bucketName,
-      params: {objectlock: ''},
-      body: JSON.stringify(body),
-      config: options.config,
-      headers: options.headers,
+    bucketName: bucketName,
+    params: {objectlock: ''},
+    body: JSON.stringify(body),
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -2125,14 +2121,14 @@ BosClient.prototype.getBucketObjectLock = function (bucketName, options) {
   options = options || {};
 
   if (!bucketName) {
-      throw new TypeError('bucketName should not be empty.');
+    throw new TypeError('bucketName should not be empty.');
   }
 
   return this.sendRequest('GET', {
-      bucketName: bucketName,
-      params: {objectlock: ''},
-      config: options.config,
-      headers: options.headers,
+    bucketName: bucketName,
+    params: {objectlock: ''},
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -2144,14 +2140,14 @@ BosClient.prototype.deleteBucketObjectLock = function (bucketName, options) {
   options = options || {};
 
   if (!bucketName) {
-      throw new TypeError('bucketName should not be empty.');
+    throw new TypeError('bucketName should not be empty.');
   }
 
   return this.sendRequest('DELETE', {
-      bucketName: bucketName,
-      params: {objectlock: ''},
-      config: options.config,
-      headers: options.headers,
+    bucketName: bucketName,
+    params: {objectlock: ''},
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -2164,19 +2160,19 @@ BosClient.prototype.extendBucketObjectLock = function (bucketName, body, options
   body = u.pick(body || {}, ['extendRetentionDays']);
 
   if (!bucketName) {
-      throw new TypeError('bucketName should not be empty.');
+    throw new TypeError('bucketName should not be empty.');
   }
 
   if (!body.extendRetentionDays) {
-      throw new TypeError('extendRetentionDays should not be empty.');
+    throw new TypeError('extendRetentionDays should not be empty.');
   }
 
   return this.sendRequest('POST', {
-      bucketName: bucketName,
-      params: {extendobjectlock: ''},
-      body: JSON.stringify(body),
-      config: options.config,
-      headers: options.headers,
+    bucketName: bucketName,
+    params: {extendobjectlock: ''},
+    body: JSON.stringify(body),
+    config: options.config,
+    headers: options.headers
   });
 };
 
@@ -2188,14 +2184,14 @@ BosClient.prototype.completeBucketObjectLock = function (bucketName, options) {
   options = options || {};
 
   if (!bucketName) {
-      throw new TypeError('bucketName should not be empty.');
+    throw new TypeError('bucketName should not be empty.');
   }
 
   return this.sendRequest('POST', {
-      bucketName: bucketName,
-      params: {completeobjectlock: ''},
-      config: options.config,
-      headers: options.headers,
+    bucketName: bucketName,
+    params: {completeobjectlock: ''},
+    config: options.config,
+    headers: options.headers
   });
 };
 
