@@ -57354,7 +57354,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":153}],411:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.4",
+  "version": "1.0.3-beta.5",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -57374,7 +57374,6 @@ module.exports={
     "test": "__tests__"
   },
   "scripts": {
-    "version": "node scripts/version.js",
     "build": "node scripts/build.js",
     "pack": "rm -rf dist/ && mkdir dist && browserify index.js -s baidubce.sdk -o dist/baidubce-sdk.bundle.js && uglifyjs dist/baidubce-sdk.bundle.js --compress --mangle -o dist/baidubce-sdk.bundle.min.js",
     "docs": "cd example && npm run start",
@@ -57429,6 +57428,7 @@ module.exports={
     "uglify-js": "^3.17.4"
   }
 }
+
 },{}],412:[function(require,module,exports){
 "use strict";
 
@@ -59310,7 +59310,7 @@ util.inherits(BosClient, BceBaseClient);
 /**
  * generate an authorization url with expire time and optional arguments
  * @param {string} bucketName the target bucket name
- * @param {string} key the target object name 
+ * @param {string} key the target object name
  * @param {*} timestamp a number representing timestamp in seconds
  * @param {*} expirationInSeconds expire time in seconds
  * @param {*} headers optional http request headers, default is empty
@@ -60785,7 +60785,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
 // };
 
 /**
- *  
+ *
  * @param {string} httpMethod GET,POST,PUT,DELETE,HEAD
  * @param {string} resource The http request path.
  * @param {Object} args The request info.
@@ -60871,7 +60871,7 @@ BosClient.prototype._checkOptions = function (options, allowedParams) {
   return rv;
 };
 BosClient.prototype._prepareObjectHeaders = function (options) {
-  var allowedHeaders = [H.ORIGIN, H.ACCESS_CONTROL_REQUEST_METHOD, H.ACCESS_CONTROL_REQUEST_HEADERS, H.CONTENT_LENGTH, H.CONTENT_ENCODING, H.CONTENT_MD5, H.X_BCE_CONTENT_SHA256, H.CONTENT_TYPE, H.CONTENT_DISPOSITION, H.ETAG, H.SESSION_TOKEN, H.CACHE_CONTROL, H.EXPIRES, H.X_BCE_ACL, H.X_BCE_GRANT_READ, H.X_BCE_GRANT_FULL_CONTROL, H.X_BCE_OBJECT_ACL, H.X_BCE_OBJECT_GRANT_READ, H.X_BCE_STORAGE_CLASS, H.X_BCE_SERVER_SIDE_ENCRYPTION, H.X_BCE_RESTORE_DAYS, H.X_BCE_RESTORE_TIER, H.X_BCE_SYMLINK_TARGET, H.X_BCE_FORBID_OVERWRITE, H.X_BCE_TRAFFIC_LIMIT, H.X_BCE_FETCH_SOURCE, H.X_BCE_FETCH_MODE, H.X_BCE_CALLBACK_ADDRESS, H.X_BCE_FETCH_REFERER, H.X_BCE_FETCH_USER_AGENT, H.X_BCE_PROCESS, H.X_BCE_SOURCE];
+  var allowedHeaders = [H.ORIGIN, H.ACCESS_CONTROL_REQUEST_METHOD, H.ACCESS_CONTROL_REQUEST_HEADERS, H.CONTENT_LENGTH, H.CONTENT_ENCODING, H.CONTENT_MD5, H.X_BCE_CONTENT_SHA256, H.CONTENT_TYPE, H.CONTENT_DISPOSITION, H.ETAG, H.SESSION_TOKEN, H.CACHE_CONTROL, H.EXPIRES, H.X_BCE_ACL, H.X_BCE_GRANT_READ, H.X_BCE_GRANT_FULL_CONTROL, H.X_BCE_OBJECT_ACL, H.X_BCE_OBJECT_GRANT_READ, H.X_BCE_STORAGE_CLASS, H.X_BCE_SERVER_SIDE_ENCRYPTION, H.X_BCE_RESTORE_DAYS, H.X_BCE_RESTORE_TIER, H.X_BCE_SYMLINK_TARGET, H.X_BCE_FORBID_OVERWRITE, H.X_BCE_TRAFFIC_LIMIT, H.X_BCE_FETCH_SOURCE, H.X_BCE_FETCH_MODE, H.X_BCE_CALLBACK_ADDRESS, H.X_BCE_FETCH_REFERER, H.X_BCE_FETCH_USER_AGENT, H.X_BCE_PROCESS, H.X_BCE_SOURCE, H.X_BCE_TAGGING];
   var metaSize = 0;
   var headers = u.pick(options, function (value, key) {
     if (allowedHeaders.indexOf(key) !== -1) {
@@ -62899,6 +62899,7 @@ exports.X_BCE_FETCH_REFERER = 'x-bce-fetch-referer';
 exports.X_BCE_FETCH_USER_AGENT = 'x-bce-fetch-user-agent';
 exports.X_BCE_PROCESS = 'x-bce-process';
 exports.X_BCE_SOURCE = 'x-bce-source';
+exports.X_BCE_TAGGING = 'x-bce-tagging';
 exports.X_HTTP_HEADERS = 'http_headers';
 exports.X_BODY = 'body';
 exports.X_STATUS_CODE = 'status_code';
