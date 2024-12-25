@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.0.3-beta.7
+
+_published on 2024-12-25_
+
+- chore: Adjust the priority of the `removeVersionPrefix` parameter;
+- chore: update mimeType to support `mjs` files;
+
 ## 1.0.3-beta.5
 
 _published on 2024-12-02_

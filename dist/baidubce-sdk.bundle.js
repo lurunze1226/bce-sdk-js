@@ -57354,7 +57354,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":153}],411:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.5",
+  "version": "1.0.3-beta.7",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -60745,13 +60745,15 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   var endpoint = this.config.endpoint;
   var bucketName = varArgs.bucketName;
   var region = varArgs.config ? varArgs.config.region : this.config.region;
+  var localRemoveVersionPrefix = varArgs.config ? varArgs.config.removeVersionPrefix : false;
+  var versionPrefix = localRemoveVersionPrefix || this.config.removeVersionPrefix ? '/' : '/v1';
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
   var customGenerateUrl = varArgs.config && varArgs.config.customGenerateUrl ? varArgs.config.customGenerateUrl : this.config.customGenerateUrl ? this.config.customGenerateUrl : undefined;
 
   // provide the method for generating url
   if (typeof customGenerateUrl === 'function') {
     endpoint = customGenerateUrl(bucketName, region);
-    var resource = requestUrl || path.normalize(path.join(varArgs.removeVersionPrefix ? '/' : '/v1', strings.normalize(varArgs.key || '', false))).replace(/\\/g, '/');
+    var resource = requestUrl || path.normalize(path.join(versionPrefix, strings.normalize(varArgs.key || '', false))).replace(/\\/g, '/');
   } else {
     endpoint = domainUtils.handleEndpoint({
       bucketName: bucketName,
@@ -60761,7 +60763,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
       cname_enabled: this.config.cname_enabled,
       pathStyleEnable: this.config.pathStyleEnable
     });
-    var resource = requestUrl || path.normalize(path.join(varArgs.removeVersionPrefix ? '/' : '/v1',
+    var resource = requestUrl || path.normalize(path.join(versionPrefix ? '/' : '/v1',
     // if pathStyleEnable is true
     !this.config.pathStyleEnable ? '' : strings.normalize(varArgs.bucketName || ''), strings.normalize(varArgs.key || '', false))).replace(/\\/g, '/');
   }
@@ -64747,6 +64749,7 @@ var mimeTypes = {
   'ser': 'application/java-serialized-object',
   'class': 'application/java-vm',
   'js': 'application/javascript',
+  'mjs': 'application/javascript',
   'json': 'application/json',
   'jsonml': 'application/jsonml+json',
   'lostxml': 'application/lost+xml',
