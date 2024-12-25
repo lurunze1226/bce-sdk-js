@@ -1724,6 +1724,8 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
 
   const bucketName = varArgs.bucketName;
   const region = varArgs.config ? varArgs.config.region : this.config.region;
+  const versionPrefix = (varArgs.config.removeVersionPrefix || this.config.removeVersionPrefix) ? '/' : '/v1';
+
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
 
   const customGenerateUrl =
@@ -1739,7 +1741,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
     var resource =
       requestUrl ||
       path
-        .normalize(path.join(varArgs.removeVersionPrefix ? '/' : '/v1', strings.normalize(varArgs.key || '', false)))
+        .normalize(path.join(versionPrefix, strings.normalize(varArgs.key || '', false)))
         .replace(/\\/g, '/');
   } else {
     endpoint = domainUtils.handleEndpoint({
@@ -1756,7 +1758,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
       path
         .normalize(
           path.join(
-            varArgs.removeVersionPrefix ? '/' : '/v1',
+            versionPrefix ? '/' : '/v1',
             // if pathStyleEnable is true
             !this.config.pathStyleEnable ? '' : strings.normalize(varArgs.bucketName || ''),
             strings.normalize(varArgs.key || '', false)
