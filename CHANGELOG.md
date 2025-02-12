@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.3-beta.8
+
+_published on 2025-02-12_
+
+- feat: support `proxy` configuration;
+
 ## 1.0.3-beta.7
 
 _published on 2024-12-25_
