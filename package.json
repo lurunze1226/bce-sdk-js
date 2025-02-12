@@ -1,10 +1,11 @@
 {
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.7",
+  "version": "1.0.3-beta.8",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
     "fs": false,
+    "net": "./src/browser/net.js",
     "index.js": "./dist/baidubce-sdk.bundle.js"
   },
   "files": [
@@ -44,8 +45,8 @@
     "dayjs": "^1.11.10",
     "debug": "^3.1.0",
     "filesize": "^10.1.0",
-    "http-proxy-agent": "^7.0.2",
-    "https-proxy-agent": "^7.0.6",
+    "http-proxy-agent": "^5.0.0",
+    "https-proxy-agent": "^5.0.1",
     "lodash": "^4.17.21",
     "process": "^0.11.10",
     "q": "^1.5.1",
