@@ -24,6 +24,8 @@ var https = require('https');
 var util = require('util');
 var stream = require('stream');
 var EventEmitter = require('events').EventEmitter;
+var {HttpsProxyAgent} = require('https-proxy-agent');
+var {HttpProxyAgent} = require('http-proxy-agent');
 
 var u = require('underscore');
 var Q = require('q');
@@ -31,6 +33,11 @@ var debug = require('debug')('bce-sdk:HttpClient');
 
 var H = require('./headers');
 var Auth = require('./auth');
+
+/** 是否为浏览器环境 */
+const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+/** 是否为NodeJS环境 */
+const isNodeJS = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
 
 /**
  * 签名计算函数
@@ -48,6 +55,14 @@ var Auth = require('./auth');
  */
 
 /**
+ * 代理配置
+ *
+ * @typedef {Object} ProxyConfig
+ * @property {string} host - 代理服务器地址
+ * @property {string} port - 代理服务器端口号
+ */
+
+/**
  * @typedef {Object} BceConfig
  * @property {string} endpoint - 服务Endpoinit, default: http(s)://<Service>.<Region>.baidubce.com
  * @property {string} [region=bj] - 区域, default: bj
@@ -57,6 +72,7 @@ var Auth = require('./auth');
  * @property {string=} sessionToken - 使用临时鉴权信息时，需要传入 `sessionToken`
  * @property {string=} protocol - 协议
  * @property {SignatureFunction=} createSignature - 签名函数，使用临时鉴权时，需要传入 `createSignature` 函数更新签名
+ * @property {ProxyConfig=} proxy - 代理配置
  */
 
 /**
@@ -131,6 +147,7 @@ HttpClient.prototype.sendRequest = function (httpMethod, path, body, headers, pa
   httpMethod = httpMethod.toUpperCase();
   var requestUrl = this._getRequestUrl(path, params);
   var options = require('url').parse(requestUrl);
+
   debug('httpMethod = %s, requestUrl = %s, options = %j', httpMethod, requestUrl, options);
 
   // Prepare the request headers.
@@ -180,6 +197,32 @@ HttpClient.prototype.sendRequest = function (httpMethod, path, body, headers, pa
   // An 'error' event is emitted if verification fails.
   // Verification happens at the connection level, before the HTTP request is sent.
   options.rejectUnauthorized = false;
+
+  // 代理服务器配置，仅支持NodeJS环境配置
+  if (isNodeJS && this.config.proxy && u.isObject(this.config.proxy)) {
+    const {host, port: port} = this.config.proxy;
+    /** 代理服务器的协议需要和BOS服务端保持一致 */
+    const protocol = ['http', 'https'].includes(this.config.protocol) ? this.config.protocol : 'http';
+    const proxyHost = typeof host === 'string' ? host : '';
+    const proxyPort =
+      typeof port === 'number' && Number.isInteger(port) && port >= 1 && port <= 65536
+        ? port
+        : protocol === 'https'
+        ? 443
+        : 80;
+
+    if (proxyHost) {
+      const proxyUrl = `${protocol}://${proxyHost}:${proxyPort}`;
+
+      debug('proxyUrl = %j', proxyUrl);
+
+      if (protocol === 'https') {
+        options.agent = new HttpsProxyAgent(proxyUrl);
+      } else {
+        options.agent = new HttpProxyAgent(proxyUrl);
+      }
+    }
+  }
 
   if (typeof signFunction === 'function') {
     var promise = signFunction(this.config.credentials, httpMethod, path, params, headers, this);

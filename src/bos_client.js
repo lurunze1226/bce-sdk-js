@@ -37,7 +37,7 @@ var stream = require('stream');
 var Multipart = require('./multipart');
 var Base64 = require('./base64');
 var {domainUtils} = require('./helper');
-var debug = require('debug')('bce-sdk:super-upload');
+var debug = require('debug')('bce-sdk:BosClient');
 var SuperUpload = require('./bos/super_upload');
 
 // var MIN_PART_SIZE = 1048576;                // 1M
@@ -1710,6 +1710,10 @@ BosClient.prototype.selectObject = function (bucketName, objectName, body, optio
 
 // --- E N D ---
 BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
+  debug('<sendRequest> httpMethod = %j', httpMethod);
+  debug('<sendRequest> varArgs = %j', varArgs);
+  debug('<sendRequest> requestUrl = %j', requestUrl);
+
   var defaultArgs = {
     bucketName: null,
     key: null,
@@ -1725,7 +1729,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   const bucketName = varArgs.bucketName;
   const region = varArgs.config ? varArgs.config.region : this.config.region;
   const localRemoveVersionPrefix = varArgs.config ? varArgs.config.removeVersionPrefix : false;
-  const versionPrefix = (localRemoveVersionPrefix || this.config.removeVersionPrefix) ? '/' : '/v1';
+  const versionPrefix = localRemoveVersionPrefix || this.config.removeVersionPrefix ? '/' : '/v1';
 
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
 
@@ -1741,9 +1745,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
     endpoint = customGenerateUrl(bucketName, region);
     var resource =
       requestUrl ||
-      path
-        .normalize(path.join(versionPrefix, strings.normalize(varArgs.key || '', false)))
-        .replace(/\\/g, '/');
+      path.normalize(path.join(versionPrefix, strings.normalize(varArgs.key || '', false))).replace(/\\/g, '/');
   } else {
     endpoint = domainUtils.handleEndpoint({
       bucketName,
@@ -1770,6 +1772,9 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
 
   var args = u.extend(defaultArgs, varArgs);
   var config = u.extend({}, this.config, args.config, {endpoint});
+
+  debug('<sendRequest> args = %j', args);
+  debug('<sendRequest> config = %j', config);
 
   if (config.sessionToken) {
     args.headers[H.SESSION_TOKEN] = config.sessionToken;
