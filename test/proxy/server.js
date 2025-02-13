@@ -40,14 +40,18 @@ const proxy = http.createServer((clientReq, clientRes) => {
 
     // 收集响应体数据
     let responseBody = [];
+
+    // 不再实时写入 clientRes，而是先缓冲所有数据
     proxyRes.on('data', (chunk) => {
       responseBody.push(chunk);
-      clientRes.write(chunk); // 实时转发给客户端
     });
 
     proxyRes.on('end', () => {
       if (responseBody.length > 0) {
-        const responseRaw = Buffer.concat(responseBody).toString();
+        // 将所有的 buffer 合并为一个 buffer
+        const buffer = Buffer.concat(responseBody);
+        // 将 buffer 转换为 UTF-8 编码的字符串
+        const responseRaw = buffer.toString('utf8');
 
         try {
           const jsonify = JSON.parse(responseRaw);
@@ -55,6 +59,15 @@ const proxy = http.createServer((clientReq, clientRes) => {
         } catch (error) {
           console.log('响应体:', responseRaw);
         }
+
+        /** 设置响应头，并指定为 JSON 类型 */
+        clientRes.writeHead(proxyRes.statusCode, {
+          ...proxyRes.headers,
+          'Content-Type': 'application/json'
+        });
+
+        // 转发给客户端
+        clientRes.write(responseRaw);
       }
       clientRes.end(); // 结束客户端响应
     });
