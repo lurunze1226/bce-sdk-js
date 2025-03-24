@@ -1727,7 +1727,10 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   var endpoint = this.config.endpoint;
 
   const bucketName = varArgs.bucketName;
-  const region = varArgs.config ? varArgs.config.region : this.config.region;
+  /**
+   * 优先使用API级别传入的region配置，如果未设置，则使用全局endpoint继续处理
+   */
+  const region = varArgs.config ? varArgs.config.region : '';
   const localRemoveVersionPrefix = varArgs.config ? varArgs.config.removeVersionPrefix : false;
   const versionPrefix = localRemoveVersionPrefix || this.config.removeVersionPrefix ? '/' : '/v1';
 
