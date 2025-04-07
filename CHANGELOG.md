@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 1.0.3
+
+_published on 2025-04-07_
+
+- feat:
+  - Add compliance retention related APIs
+  - initBucketObjectLock support headers
+  - support `proxy` configuration;
+
+- fix:
+  - Fix endpoint is mistakenly set by virtual host config
+  - Allow passing headers in the ObjectLock related APIs
+
+- chore
+  - BosClient support 'x-bce-tagging' header;
+  - Adjust the priority of the removeVersionPrefix parameter;
+  - update mimeType to support mjs files;
+  - custom gloal config endpoint mistakenly overwritten by bj endpoint;
+
 ## 1.0.3-beta.9
 
 _published on 2025-03-24_

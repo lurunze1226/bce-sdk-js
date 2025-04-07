@@ -58609,7 +58609,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":168}],426:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.3-beta.9",
+  "version": "1.0.3",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -60581,6 +60581,7 @@ BosClient.prototype.generatePresignedUrl = function (bucketName, key, timestamp,
   config = u.extend({}, this.config, config);
   bucketName = config.cname_enabled ? '' : bucketName;
   var endpoint = config.endpoint;
+  var pathStyleEnable = !!domainUtils.isIpHost(endpoint) || config.pathStyleEnable;
 
   // the endpoint provided in config, don't need to generate it by region
   endpoint = domainUtils.handleEndpoint({
@@ -60588,11 +60589,11 @@ BosClient.prototype.generatePresignedUrl = function (bucketName, key, timestamp,
     endpoint: endpoint,
     protocol: config.protocol,
     cname_enabled: config.cname_enabled,
-    pathStyleEnable: config.pathStyleEnable,
+    pathStyleEnable: pathStyleEnable,
     customGenerateUrl: config.customGenerateUrl
   });
   params = params || {};
-  var resource = path.normalize(path.join(config.removeVersionPrefix ? '/' : '/v1', !config.pathStyleEnable ? '' : strings.normalize(bucketName || ''), strings.normalize(key || '', false))).replace(/\\/g, '/');
+  var resource = path.normalize(path.join(config.removeVersionPrefix ? '/' : '/v1', !pathStyleEnable ? '' : strings.normalize(bucketName || ''), strings.normalize(key || '', false))).replace(/\\/g, '/');
   headers = headers || {};
   headers.Host = require('url').parse(endpoint).host;
   var credentials = config.credentials;
@@ -62013,6 +62014,7 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
   var versionPrefix = localRemoveVersionPrefix || this.config.removeVersionPrefix ? '/' : '/v1';
   varArgs.bucketName = this.config.cname_enabled ? '' : bucketName;
   var customGenerateUrl = varArgs.config && varArgs.config.customGenerateUrl ? varArgs.config.customGenerateUrl : this.config.customGenerateUrl ? this.config.customGenerateUrl : undefined;
+  var pathStyleEnable = !!domainUtils.isIpHost(endpoint) || this.config.pathStyleEnable;
 
   // provide the method for generating url
   if (typeof customGenerateUrl === 'function') {
@@ -62025,11 +62027,11 @@ BosClient.prototype.sendRequest = function (httpMethod, varArgs, requestUrl) {
       region: region,
       protocol: this.config.protocol,
       cname_enabled: this.config.cname_enabled,
-      pathStyleEnable: this.config.pathStyleEnable
+      pathStyleEnable: pathStyleEnable
     });
     var resource = requestUrl || path.normalize(path.join(versionPrefix ? '/' : '/v1',
     // if pathStyleEnable is true
-    !this.config.pathStyleEnable ? '' : strings.normalize(varArgs.bucketName || ''), strings.normalize(varArgs.key || '', false))).replace(/\\/g, '/');
+    !pathStyleEnable ? '' : strings.normalize(varArgs.bucketName || ''), strings.normalize(varArgs.key || '', false))).replace(/\\/g, '/');
   }
   var args = u.extend(defaultArgs, varArgs);
   var config = u.extend({}, this.config, args.config, {
