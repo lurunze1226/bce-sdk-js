@@ -99,16 +99,17 @@ util.inherits(BosClient, BceBaseClient);
 
 // --- B E G I N ---
 /**
- * generate an authorization url with expire time and optional arguments
- * @param {string} bucketName the target bucket name
- * @param {string} key the target object name
- * @param {*} timestamp a number representing timestamp in seconds
- * @param {*} expirationInSeconds expire time in seconds
- * @param {*} headers optional http request headers, default is empty
- * @param {*} params optional sign params, default is empty
- * @param {*} headersToSign optional the request headers list to calcualated in the signature, default is empty
- * @param {*} config the client configuration
- * @returns {string} the presigned url with authorization string
+ * 生成带签名的文件URL
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string=} timestamp 当前ISO时间戳
+ * @param {number=} expirationInSeconds 过期时间，单位为秒，默认1800秒
+ * @param {Record<string, any>=} headers 额外添加的HTTP请求头，默认为空
+ * @param {Record<string, any>=} params 需要额外签名的Query参数，默认为空
+ * @param {string[]=} headersToSign 需要额外签名的HTTP请求头，默认为空，默认会对host、content-md5、content-type、content-length进行签名
+ * @param {Record<string, any>=} config Client配置信息
+ * @returns {string} 带签名的文件URL
  */
 BosClient.prototype.generatePresignedUrl = function (
   bucketName,
@@ -174,6 +175,14 @@ BosClient.prototype.generatePresignedUrl = function (
   return util.format('%s%s?%s', endpoint, resource, qs.encode(params));
 };
 
+/**
+ * 生成不带签名的文件URL，适用于公共读权限的文件
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string|Object[]=} pipeline 图片处理指令，默认为空
+ * @returns {string} 文件URL
+ */
 BosClient.prototype.generateUrl = function (bucketName, key, pipeline, cdn, config) {
   config = u.extend({}, this.config, config);
   bucketName = config.cname_enabled ? '' : bucketName;
@@ -834,6 +843,12 @@ BosClient.prototype.deleteObject = function (bucketName, key, options) {
   });
 };
 
+/**
+ * @typedef {Object} PutObjectResponse
+ * @property {Record<string, string>} http_headers 文件的http头部信息
+ * @property {Record<string, never>} body 空对象
+ */
+
 BosClient.prototype.putObject = function (bucketName, key, data, options) {
   if (!key) {
     throw new TypeError('key should not be empty.');
@@ -850,6 +865,15 @@ BosClient.prototype.putObject = function (bucketName, key, data, options) {
   });
 };
 
+/**
+ * 以Blob对象形式上传，支持浏览器端调用
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} blob Blob对象
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @returns {PutObjectResponse}
+ */
 BosClient.prototype.putObjectFromBlob = function (bucketName, key, blob, options) {
   var headers = {};
 
@@ -862,6 +886,15 @@ BosClient.prototype.putObjectFromBlob = function (bucketName, key, blob, options
   return this.putObject(bucketName, key, blob, options);
 };
 
+/**
+ * 以DataURL形式上传
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} data Base64编码的数据
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @returns {PutObjectResponse}
+ */
 BosClient.prototype.putObjectFromDataUrl = function (bucketName, key, data, options) {
   data = new Buffer(data, 'base64');
 
@@ -874,6 +907,15 @@ BosClient.prototype.putObjectFromDataUrl = function (bucketName, key, data, opti
   return this.putObject(bucketName, key, data, options);
 };
 
+/**
+ * 以字符串形式上传
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} data  字符串数据
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @returns {PutObjectResponse}
+ */
 BosClient.prototype.putObjectFromString = function (bucketName, key, data, options) {
   options = options || {};
 
@@ -886,6 +928,15 @@ BosClient.prototype.putObjectFromString = function (bucketName, key, data, optio
   return this.putObject(bucketName, key, data, options);
 };
 
+/**
+ * 以文件形式上传，支持Node.js环境调用
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} filename 文件路径
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @returns {PutObjectResponse}
+ */
 BosClient.prototype.putObjectFromFile = function (bucketName, key, filename, options) {
   options = options || {};
 
@@ -948,6 +999,21 @@ BosClient.prototype.getObjectMetadata = function (bucketName, key, options) {
   });
 };
 
+/**
+ * @typedef {Object} GetObjectResponse
+ * @property {Record<string, string>} http_headers 文件的http头部信息
+ * @property {Buffer} body 文件流
+ */
+
+/**
+ * 获取Object，将Object文件读取到一个Stream中
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string=} range 指定下载的文件范围，格式为"0-100"，单位为字节，默认不指定范围，
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头 (比如单链接下载限速：{'x-bce-traffic-limit': 819200})
+ * @returns {GetObjectResponse}
+ */
 BosClient.prototype.getObject = function (bucketName, key, range, options) {
   if (!key) {
     throw new TypeError('key should not be empty.');
@@ -989,6 +1055,22 @@ BosClient.prototype.getObject = function (bucketName, key, range, options) {
   });
 };
 
+/**
+ * @typedef {Object} GetObjectFileResponse
+ * @property {Record<string, string>} http_headers 文件的http头部信息
+ * @property {Record<string, never>} body 空对象，因为文件已经写入本地文件
+ */
+
+/**
+ * 获取Object，将Object写入本地文件中
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} filename 本地文件路径
+ * @param {string=} range 需要下载的文件范围，单位为字节，默认不指定范围，格式为"0-100"
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头 (比如单链接下载限速：{'x-bce-traffic-limit': 819200})
+ * @returns {GetObjectFileResponse}
+ */
 BosClient.prototype.getObjectToFile = function (bucketName, key, filename, range, options) {
   if (!key) {
     throw new TypeError('key should not be empty.');
@@ -1051,6 +1133,13 @@ BosClient.prototype.copyObject = function (sourceBucketName, sourceKey, targetBu
   });
 };
 
+/**
+ * 向BOS请求一个全局唯一的UploadId，用于表示此次MultipartUpload
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.initiateMultipartUpload = function (bucketName, key, options) {
   options = options || {};
 
@@ -1079,6 +1168,15 @@ BosClient.prototype.abortMultipartUpload = function (bucketName, key, uploadId, 
   });
 };
 
+/**
+ * 当请求者用UploadPart将所有的Part都上传完成后，需要用此CompleteMultipartUpload命令完成整个MultipartUpload操作
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} uploadId 上传任务ID，由initiateMultipartUpload返回
+ * @param {Array<{ETag: string, PartNumber: number}>} partList 已经上传的Part列表，按照PartNumber升序排列
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.completeMultipartUpload = function (bucketName, key, uploadId, partList, options) {
   var headers = {};
   headers[H.CONTENT_TYPE] = 'application/json; charset=UTF-8';
@@ -1094,6 +1192,18 @@ BosClient.prototype.completeMultipartUpload = function (bucketName, key, uploadI
   });
 };
 
+/**
+ * 分片上传Part，以文件形式上传，支持Node.js环境调用
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} uploadId 上传任务ID，由initiateMultipartUpload返回
+ * @param {number} partNumber 文件分片编号，从1开始
+ * @param {number} partSize 分片大小，单位为字节
+ * @param {string} filename 文件路径
+ * @param {number} offset 文件偏移量，单位为字节
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.uploadPartFromFile = function (
   bucketName,
   key,
@@ -1113,6 +1223,17 @@ BosClient.prototype.uploadPartFromFile = function (
   return this.uploadPart(bucketName, key, uploadId, partNumber, partSize, partFp, options);
 };
 
+/**
+ * 分片上传Part，以Blob对象形式上传，支持浏览器环境调用
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} uploadId 上传任务ID，由initiateMultipartUpload返回
+ * @param {number} partNumber 文件分片编号，从1开始
+ * @param {number} partSize 分片大小，单位为字节
+ * @param {Blob} blob Blob对象
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.uploadPartFromBlob = function (bucketName, key, uploadId, partNumber, partSize, blob, options) {
   if (blob.size !== partSize) {
     throw new TypeError(util.format('Invalid partSize %d and data length %d', partSize, blob.size));
@@ -1138,6 +1259,17 @@ BosClient.prototype.uploadPartFromBlob = function (bucketName, key, uploadId, pa
   });
 };
 
+/**
+ * 分片上传Part，以DataUrl的形式上传
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} uploadId 上传任务ID，由initiateMultipartUpload返回
+ * @param {number} partNumber 文件分片编号，从1开始
+ * @param {number} partSize 分片大小，单位为字节
+ * @param {string} dataUrl DataUrl字符串
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.uploadPartFromDataUrl = function (
   bucketName,
   key,
@@ -1172,6 +1304,17 @@ BosClient.prototype.uploadPartFromDataUrl = function (
   });
 };
 
+/**
+ * 分片上传Part, 以文件流形式上传
+ *
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {string} uploadId 上传任务ID，由initiateMultipartUpload返回
+ * @param {number} partNumber 文件分片编号，从1开始
+ * @param {number} partSize 分片大小，单位为字节
+ * @param {stream.ReadStream} partFp 文件流
+ * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.uploadPart = function (bucketName, key, uploadId, partNumber, partSize, partFp, options) {
   /* eslint-disable */
   if (!bucketName) {
