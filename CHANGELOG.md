@@ -1,15 +1,24 @@
 # CHANGELOG
 
+## 1.0.4
+
+_published on 2025-05-20_
+
+- fix:
+  - Fix the logic error of mandatory verification in the `x-bce-fetch-source` request header in the `fetchObject` API
+
 ## 1.0.3
 
 _published on 2025-04-07_
 
 - feat:
+
   - Add compliance retention related APIs
   - initBucketObjectLock support headers
   - support `proxy` configuration;
 
 - fix:
+
   - Fix endpoint is mistakenly set by virtual host config
   - Allow passing headers in the ObjectLock related APIs
 
