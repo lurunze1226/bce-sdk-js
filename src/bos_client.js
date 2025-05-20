@@ -1761,10 +1761,21 @@ BosClient.prototype.deleteUserQuota = function (options) {
 };
 
 /**
- * 从指定url抓取资源
+ * 此接口用于从指定URL抓取资源，并将资源存储到指定的Bucket中。此操作需要请求者对该Bucket有写权限，每次只能抓取一个Object，且用户可以自定义Object的名称。
+ * FetchObject接口抓取资源的大小限制为0~10GB。其中`x-bce-fetch-source`为必填写参数，表示待抓取资源的源URL地址。
+ *
+ * 示例:
+ * ```js
+ * const response = await client.fetchObject(
+ *   bucketName,
+ *   objectName,
+ *   {'x-bce-fetch-source': 'http://www.abc.com/img.jpg'}
+ * );
+ * ```
  *
  * @param {string} bucketName 桶名称
  * @param {string} objectName 文件名称
+ * @param {Record<string, any>} options 额外的参数，包含Client配置信息，额外的请求头等
  */
 BosClient.prototype.fetchObject = function (bucketName, objectName, options) {
   if (!bucketName) {
@@ -1778,7 +1789,7 @@ BosClient.prototype.fetchObject = function (bucketName, objectName, options) {
   options = this._checkOptions(options || {}, [H.X_BCE_FETCH_SOURCE]);
   var headers = options.headers;
 
-  if (!headers[H.X_BCE_FETCH_SOURCE] || options.params[H.X_BCE_FETCH_SOURCE]) {
+  if (!headers[H.X_BCE_FETCH_SOURCE]) {
     throw new TypeError('x-bce-fetch-source should not be empty, at least in query string or headers.');
   }
 
