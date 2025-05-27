@@ -58609,7 +58609,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":168}],426:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.4",
+  "version": "1.0.5-beta.2",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -64320,6 +64320,7 @@ exports.X_BCE_ACL = 'x-bce-acl';
 exports.X_BCE_GRANT_READ = 'x-bce-grant-read';
 exports.X_BCE_GRANT_FULL_CONTROL = 'x-bce-grant-full-control';
 exports.X_BCE_REQUEST_ID = 'x-bce-request-id';
+exports.X_BCE_DEBUG_ID = 'x-bce-debug-id';
 exports.X_BCE_CONTENT_SHA256 = 'x-bce-content-sha256';
 exports.X_BCE_OBJECT_ACL = 'x-bce-object-acl';
 exports.X_BCE_OBJECT_GRANT_READ = 'x-bce-object-grant-read';
@@ -65013,6 +65014,8 @@ HttpClient.prototype._doRequest = function (options, body, outputStream) {
       }, false);
     });
   }
+
+  /** 这里处理http/https请求抛出的错误 */
   req.on('error', function (error) {
     deferred.reject(error);
   });
@@ -65076,6 +65079,8 @@ HttpClient.prototype._fixHeaders = function (headers) {
 HttpClient.prototype._recvResponse = function (res) {
   var responseHeaders = this._fixHeaders(res.headers);
   var statusCode = res.statusCode;
+  var deferred = Q.defer();
+  var payload = [];
   function parseHttpResponseBody(raw) {
     var contentType = responseHeaders['content-type'];
     if (!raw.length) {
@@ -65085,8 +65090,7 @@ HttpClient.prototype._recvResponse = function (res) {
     }
     return raw;
   }
-  var deferred = Q.defer();
-  var payload = [];
+
   /* eslint-disable */
   res.on('data', function (chunk) {
     if (Buffer.isBuffer(chunk)) {
@@ -65096,9 +65100,10 @@ HttpClient.prototype._recvResponse = function (res) {
       payload.push(new Buffer(chunk));
     }
   });
-  res.on('error', function (e) {
-    deferred.reject(e);
+  res.on('error', function (error) {
+    deferred.reject(error);
   });
+
   /* eslint-enable */
   res.on('end', function () {
     var raw = Buffer.concat(payload);
@@ -65115,7 +65120,7 @@ HttpClient.prototype._recvResponse = function (res) {
       deferred.reject(failure(statusCode, 'Can not handle 1xx http status code.'));
     } else if (statusCode < 100 || statusCode >= 300) {
       if (responseBody.requestId) {
-        deferred.reject(failure(statusCode, responseBody.message, responseBody.code, responseBody.requestId, responseHeaders.date));
+        deferred.reject(failure(statusCode, responseBody.message, responseBody, responseHeaders));
       } else {
         deferred.reject(failure(statusCode, responseBody));
       }
@@ -65191,18 +65196,42 @@ function success(httpHeaders, body) {
   response[H.X_BODY] = body;
   return response;
 }
-function failure(statusCode, message, code, requestId, xBceDate) {
+
+/**
+ * 失败响应体
+ *
+ * @typedef {Object} ResponseBody
+ * @property {string} code - BOS服务端错误码
+ * @property {string} message - BOS服务端错误信息
+ * @property {string} requestId - BOS服务端请求ID
+ */
+
+/**
+ * 统一的失败处理
+ * @param {number} statusCode HTTP状态码
+ * @param {string} message 错误信息
+ * @param {ResponseBody=} responseBody 响应体信息
+ * @param {Record<string, string>=} headers 请求头信息
+ */
+function failure(statusCode, message, responseBody, headers) {
   var response = {};
   response[H.X_STATUS_CODE] = statusCode;
   response[H.X_MESSAGE] = Buffer.isBuffer(message) ? String(message) : message;
-  if (code) {
-    response[H.X_CODE] = code;
+  if (responseBody) {
+    if (responseBody.code) {
+      response[H.X_CODE] = responseBody.code;
+    }
+    if (responseBody.requestId) {
+      response[H.X_REQUEST_ID] = responseBody.requestId;
+    }
   }
-  if (requestId) {
-    response[H.X_REQUEST_ID] = requestId;
-  }
-  if (xBceDate) {
-    response[H.X_BCE_DATE] = xBceDate;
+  if (headers) {
+    if (headers['date']) {
+      response[H.X_BCE_DATE] = headers['date'];
+    }
+    if (headers[H.X_BCE_DEBUG_ID]) {
+      response[H.X_BCE_DEBUG_ID] = headers[H.X_BCE_DEBUG_ID];
+    }
   }
   return response;
 }

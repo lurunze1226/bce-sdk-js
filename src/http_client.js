@@ -534,12 +534,14 @@ function failure(statusCode, message, responseBody, headers) {
   response[H.X_STATUS_CODE] = statusCode;
   response[H.X_MESSAGE] = Buffer.isBuffer(message) ? String(message) : message;
 
-  if (responseBody.code) {
-    response[H.X_CODE] = responseBody.code;
-  }
+  if (responseBody) {
+    if (responseBody.code) {
+      response[H.X_CODE] = responseBody.code;
+    }
 
-  if (responseBody.requestId) {
-    response[H.X_REQUEST_ID] = responseBody.requestId;
+    if (responseBody.requestId) {
+      response[H.X_REQUEST_ID] = responseBody.requestId;
+    }
   }
 
   if (headers) {
