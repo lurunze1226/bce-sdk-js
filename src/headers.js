@@ -38,6 +38,7 @@ exports.X_BCE_ACL = 'x-bce-acl';
 exports.X_BCE_GRANT_READ = 'x-bce-grant-read';
 exports.X_BCE_GRANT_FULL_CONTROL = 'x-bce-grant-full-control';
 exports.X_BCE_REQUEST_ID = 'x-bce-request-id';
+exports.X_BCE_DEBUG_ID = 'x-bce-debug-id';
 exports.X_BCE_CONTENT_SHA256 = 'x-bce-content-sha256';
 exports.X_BCE_OBJECT_ACL = 'x-bce-object-acl';
 exports.X_BCE_OBJECT_GRANT_READ = 'x-bce-object-grant-read';
