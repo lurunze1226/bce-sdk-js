@@ -1320,9 +1320,11 @@ BosClient.prototype.uploadPart = function (bucketName, key, uploadId, partNumber
   if (!bucketName) {
     throw new TypeError('bucketName should not be empty');
   }
+
   if (!key) {
     throw new TypeError('key should not be empty');
   }
+
   /* eslint-enable */
   if (partNumber < MIN_PART_NUMBER || partNumber > MAX_PART_NUMBER) {
     throw new TypeError(
@@ -1346,32 +1348,22 @@ BosClient.prototype.uploadPart = function (bucketName, key, uploadId, partNumber
   var headers = {};
   headers[H.CONTENT_LENGTH] = partSize;
   headers[H.CONTENT_TYPE] = 'application/octet-stream';
+  // MD5在外部由调用方计算，这里不计算
   // headers[H.CONTENT_MD5] = partMd5;
   options = u.extend(headers, options);
+  options = client._checkOptions(options);
 
-  if (!options[H.CONTENT_MD5]) {
-    return crypto.md5stream(partFp).then(function (md5sum) {
-      options[H.CONTENT_MD5] = md5sum;
-      return newPromise();
-    });
-  }
-
-  function newPromise() {
-    options = client._checkOptions(options);
-    return client.sendRequest('PUT', {
-      bucketName: bucketName,
-      key: key,
-      body: clonedPartFp,
-      headers: options.headers,
-      params: {
-        partNumber: partNumber,
-        uploadId: uploadId
-      },
-      config: options.config
-    });
-  }
-
-  return newPromise();
+  return client.sendRequest('PUT', {
+    bucketName: bucketName,
+    key: key,
+    body: clonedPartFp,
+    headers: options.headers,
+    params: {
+      partNumber: partNumber,
+      uploadId: uploadId
+    },
+    config: options.config
+  });
 };
 
 BosClient.prototype.uploadPartCopy = function (

@@ -44,7 +44,7 @@ const fs = require('fs');
   });
 
   // 启动上传任务
-  const tasks = superUpload.start();
+  const tasks = SuperUploadTask.start();
   console.log('切分任务: ', tasks);
 
   // 暂停上传任务
