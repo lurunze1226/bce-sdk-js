@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.0.5-beta.3
+
+_published on 2025-05-27_
+
+- fix:
+  - `putSuperObject` paused task without immediately canceling request;
+
 ## 1.0.5-beta.2
 
 _published on 2025-05-27_
