@@ -77,6 +77,21 @@ var IMAGE_DOMAIN = 'bceimg.com';
  * @typedef {import('./http_client.js').BceConfig} BceConfig
  */
 
+
+/**
+ * Options操作的配置选项
+ *
+ * 此类型定义:
+ * 1. 包含特定属性 versionId
+ * 2. 包含请求头信息，平铺到options对象中
+ * 3. 包含Clinet配置信息，平铺到options对象中
+ *
+ * @typedef {{
+ *   versionId?: string,   // 对象版本ID，仅支持getObject、getObjectMetadata
+ *   [key: string]: any    // 额外的参数，包含请求头、Clinet配置信息等
+ * }} OptionsType
+ */
+
 /**
  * BOS service api
  *
@@ -643,11 +658,13 @@ BosClient.prototype.listBucketReplication = function (bucketName, options) {
   });
 };
 
-// BosClient.prototype.deleteBucket =
-// BosClient.prototype.headBucket = function() {
-//     throw new Error("Method not implemented.");
-// }
-
+/**
+ * 获得指定Bucket的Object信息列表。
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/Ekc4epj6m
+ * @param {string} bucketName Bucket Name
+ * @param {OptionsType} options
+ */
 BosClient.prototype.listObjects = function (bucketName, options) {
   options = options || {};
   var params = u.extend({maxKeys: 1000}, u.pick(options, 'maxKeys', 'prefix', 'marker', 'delimiter'));
@@ -659,6 +676,63 @@ BosClient.prototype.listObjects = function (bucketName, options) {
   });
 };
 
+/**
+ * 用于获得指定Bucket的Object多版本信息列表
+ *
+ * 示例:
+ * ```js
+ * const response = await client.listObjectVersions(
+ *   bucketName,
+ *   {
+ *     maxKeys: 1000,
+ *     prefix: "demo-folder",
+ *     versionIdMarker: "AJyQ0XRhboY%3D&versions="
+ *   }
+ * );
+ * ```
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/Klxudlm8i
+ * @param {string} bucketName Bucket Name
+ * @param {OptionsType} options
+ */
+BosClient.prototype.listObjectVersions = function (bucketName, options) {
+  options = options || {};
+  var params = u.extend({maxKeys: 1000}, u.pick(options, 'maxKeys', 'prefix', 'marker', 'delimiter', 'versionIdMarker'));
+  params.versions = '';
+
+  return this.sendRequest('GET', {
+    bucketName: bucketName,
+    params: params,
+    config: options.config
+  });
+};
+
+/**
+ * 查看Bucket是否存在和请求者是否有权限访问这个Bucket。当请求返还200 OK时，说明Bucket存在且请求者有权限访问，由于headBucket已被占用，所以用_headBucket来代替。
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/Mkc4eqkiz
+ * @param {string} bucketName
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
+BosClient.prototype._headBucket = function (bucketName, options) {
+  if (!bucketName) {
+    throw new TypeError('bucketName should not be empty.');
+  }
+
+  options = this._checkOptions(options || {});
+
+  return this.sendRequest('HEAD', {
+    bucketName: bucketName,
+    config: options.config
+  });
+};
+
+/**
+ * 判断bucket是否存在
+ *
+ * @param {string} bucketName
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
 BosClient.prototype.headBucket = BosClient.prototype.doesBucketExist = function (bucketName, options) {
   options = options || {};
 
@@ -816,12 +890,56 @@ BosClient.prototype.getBucketLocation = function (bucketName, options) {
   });
 };
 
+/**
+ * 该命令可以实现通过一个HTTP请求删除同一个Bucket下的多个Object。
+ *   - 支持一次请求内最多删除1000个Object。
+ *   - 消息体（body）不超过2M。
+ *   - 返回的消息体中只包含删除过程中出错的Object结果；如果所有Object都删除都成功的话，则没有消息体。
+ *
+ * 示例:
+ * ```js
+ * const response = await client.deleteMultipleObjects(
+ *   "BucketName",
+ *   [
+ *     {"key": "my-object1"},
+ *     {"key": "my-object2"}
+ *   ]
+ * );
+ * ```
+ *
+ * 多版本示例:
+ * ```js
+ * const response = await client.deleteMultipleObjects(
+ *   "BucketName",
+ *   [
+ *     {"key": "my-object1", versionId: "AISQpTmwRH1="},
+ *     {"key": "my-object2", versionId: "AISQpTmwRHU="}
+ *   ]
+ * );
+ * ```
+ *
+ * @param {string} bucketName 桶名称
+ * @param {Array<{key: string; versionId?: string} | string>} objects 对象列表，最多1000个
+ * @param {OptionsType=} options
+ * @returns
+ */
 BosClient.prototype.deleteMultipleObjects = function (bucketName, objects, options) {
   options = options || {};
 
-  var body = u.map(objects, function (object) {
-    return {key: object};
-  });
+  const body = objects.map(file => {
+    if (typeof file === 'string') {
+      return {key: file};
+    } else if (typeof file === 'object') {
+      const fileObject = {key: file.key};
+
+      if (file.versionId && typeof file.versionId === 'string') {
+        fileObject.versionId = file.versionId;
+      }
+      return fileObject;
+    } else {
+      return null;
+    }
+  }).filter(file => file != null);
 
   return this.sendRequest('POST', {
     bucketName: bucketName,
@@ -833,8 +951,39 @@ BosClient.prototype.deleteMultipleObjects = function (bucketName, objects, optio
   });
 };
 
+/**
+ * 删除指定Bucket的一个Object，要求请求者对此Object有写权限。
+ *
+ * 示例:
+ * ```js
+ * const response = await client.deleteObject("Bucket", "ObjectName");
+ * ```
+ *
+ * 多版本示例:
+ * ```js
+ * const response = await client.deleteObject("Bucket", "ObjectName", {versionId: 'AISQpTmwRHU='});
+ * ```
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/bkc5tsslq
+ * @param {string} bucketName 桶名称
+ * @param {string} key 对象名称（全路径）
+ * @param {OptionsType=} options
+ * @returns
+ */
 BosClient.prototype.deleteObject = function (bucketName, key, options) {
   options = options || {};
+
+  const reqArgs = {
+    bucketName: bucketName,
+    key: key,
+    config: options.config
+  }
+
+  if (options.versionId && typeof options.versionId === 'string') {
+    reqArgs.params = {
+      versionId: options.versionId
+    }
+  }
 
   return this.sendRequest('DELETE', {
     bucketName: bucketName,
@@ -871,7 +1020,7 @@ BosClient.prototype.putObject = function (bucketName, key, data, options) {
  * @param {string} bucketName 存储桶名称
  * @param {string} key 对象名称（对象全路径）
  * @param {string} blob Blob对象
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  * @returns {PutObjectResponse}
  */
 BosClient.prototype.putObjectFromBlob = function (bucketName, key, blob, options) {
@@ -892,7 +1041,7 @@ BosClient.prototype.putObjectFromBlob = function (bucketName, key, blob, options
  * @param {string} bucketName 存储桶名称
  * @param {string} key 对象名称（对象全路径）
  * @param {string} data Base64编码的数据
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  * @returns {PutObjectResponse}
  */
 BosClient.prototype.putObjectFromDataUrl = function (bucketName, key, data, options) {
@@ -913,7 +1062,7 @@ BosClient.prototype.putObjectFromDataUrl = function (bucketName, key, data, opti
  * @param {string} bucketName 存储桶名称
  * @param {string} key 对象名称（对象全路径）
  * @param {string} data  字符串数据
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  * @returns {PutObjectResponse}
  */
 BosClient.prototype.putObjectFromString = function (bucketName, key, data, options) {
@@ -934,7 +1083,7 @@ BosClient.prototype.putObjectFromString = function (bucketName, key, data, optio
  * @param {string} bucketName 存储桶名称
  * @param {string} key 对象名称（对象全路径）
  * @param {string} filename 文件路径
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  * @returns {PutObjectResponse}
  */
 BosClient.prototype.putObjectFromFile = function (bucketName, key, filename, options) {
@@ -989,14 +1138,30 @@ BosClient.prototype.putObjectFromFile = function (bucketName, key, filename, opt
   return putObjectWithRetry(options.retryCount || MAX_RETRY_COUNT);
 };
 
+/**
+ * 获取某个Object的Meta信息，但此时并不返回数据。
+ * @param {string} bucketName 存储桶名称
+ * @param {string} key 对象名称（对象全路径）
+ * @param {OptionsType=} options
+ * @returns
+ */
 BosClient.prototype.getObjectMetadata = function (bucketName, key, options) {
   options = options || {};
 
-  return this.sendRequest('HEAD', {
+  const reqArgs = {
     bucketName: bucketName,
     key: key,
     config: options.config
-  });
+  };
+
+  /** 多版本文件的版本ID */
+  if (options.versionId && typeof options.versionId === 'string') {
+    reqArgs.params = {
+      versionId: options.versionId
+    };
+  }
+
+  return this.sendRequest('HEAD', reqArgs);
 };
 
 /**
@@ -1006,26 +1171,33 @@ BosClient.prototype.getObjectMetadata = function (bucketName, key, options) {
  */
 
 /**
+ * @typedef {Object} GetObjectOptions
+ * @property {string} versionId 指定Object的versionId
+ * @property {string=} x-bce-traffic-limit 单链接下载限速
+ * @property {string} [key: string] 允许任意其他属性（符合 Record<string, any>）
+ */
+
+/**
  * 获取Object，将Object文件读取到一个Stream中
  *
+ * @doc https://cloud.baidu.com/doc/BOS/s/xkc5pcmcj
  * @param {string} bucketName 存储桶名称
  * @param {string} key 对象名称（对象全路径）
  * @param {string=} range 指定下载的文件范围，格式为"0-100"，单位为字节，默认不指定范围，
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头 (比如单链接下载限速：{'x-bce-traffic-limit': 819200})
+ * @param {OptionsType} options 额外的参数，包含Client配置信息，额外的请求头 (比如单链接下载限速：{'x-bce-traffic-limit': 819200})
  * @returns {GetObjectResponse}
  */
 BosClient.prototype.getObject = function (bucketName, key, range, options) {
+  if (!bucketName) {
+    throw new TypeError('bucketName should not be empty.');
+  }
+
   if (!key) {
     throw new TypeError('key should not be empty.');
-  } else if (/\/\/+/.test(key)) {
-    throw new TypeError('key should not contain consecutive forward slashes (/).');
-  } else if (/^[/\\]/.test(key) || /[/\\]$/.test(key)) {
-    throw new TypeError('key should not start or end with a forward slash (/) or a backslash (\\).');
-  } else if (/\/\.\.\//.test(key)) {
-    throw new TypeError('path in key should not contain consecutive periods (..).');
   }
 
   options = options || {};
+
   var headers = {};
   if (options[H.X_BCE_TRAFFIC_LIMIT]) {
     const limit = options[H.X_BCE_TRAFFIC_LIMIT];
@@ -1038,7 +1210,7 @@ BosClient.prototype.getObject = function (bucketName, key, range, options) {
   }
 
   var outputStream = new WMStream();
-  return this.sendRequest('GET', {
+  const reqArgs = {
     bucketName: bucketName,
     key: key,
     headers: u.extend(
@@ -1049,7 +1221,16 @@ BosClient.prototype.getObject = function (bucketName, key, range, options) {
     ),
     config: options.config,
     outputStream: outputStream
-  }).then(function (response) {
+  }
+
+  /** 多版本文件的版本ID */
+  if (options.versionId && typeof options.versionId === 'string') {
+    reqArgs.params = {
+      versionId: options.versionId
+    };
+  }
+
+  return this.sendRequest('GET', reqArgs).then(function (response) {
     response.body = Buffer.concat(outputStream.store);
     return response;
   });
@@ -1068,7 +1249,7 @@ BosClient.prototype.getObject = function (bucketName, key, range, options) {
  * @param {string} key 对象名称（对象全路径）
  * @param {string} filename 本地文件路径
  * @param {string=} range 需要下载的文件范围，单位为字节，默认不指定范围，格式为"0-100"
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头 (比如单链接下载限速：{'x-bce-traffic-limit': 819200})
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头 (比如单链接下载限速：{'x-bce-traffic-limit': 819200})
  * @returns {GetObjectFileResponse}
  */
 BosClient.prototype.getObjectToFile = function (bucketName, key, filename, range, options) {
@@ -1095,6 +1276,49 @@ BosClient.prototype.getObjectToFile = function (bucketName, key, filename, range
   });
 };
 
+/**
+ * 用于把一个已经存在的Object拷贝为另外一个Object，支持Object文件的长度范围是0Byte-5GB。该接口也可以用来实现Meta更新（使用replace模式且源和目标指向同一个文件）。此接口需要请求者在header中指定拷贝源。
+ * CopyObject接口支持跨区域文件复制，即复制文件所在的源Bucket和目标Bucket可以不在同一region(目前只支持从其它Region向本Region复制数据)。当进行跨区域文件复制时，复制产生的流量会收取跨区域流量费。
+ *
+ * 示例:
+ * ```js
+ * const response = await client.copyObject(
+ *   "SourceBucket",
+ *   "SourceObject",
+ *   "TargetBucket",
+ *   "TargetObject",
+ *   {
+ *     "x-bce-copy-source": "/SourceBucket/SourceObject"
+ *     "x-bce-copy-source-if-match": "3858f62230ac3c915f300c664312c11f"
+ *     "x-bce-storage-class": "STANDARD_IA"
+ *   }
+ * );
+ * ```
+ *
+ * 多版本请求示例:
+ * ```js
+ * const response = await client.copyObject(
+ *   "SourceBucket",
+ *   "SourceObject",
+ *   "TargetBucket",
+ *   "TargetObject",
+ *   {
+ *     "x-bce-copy-source": "/SourceBucket/SourceObject?versionId=AJyQ0XRhboY="
+ *     "x-bce-copy-source-if-match": "3858f62230ac3c915f300c664312c11f"
+ *     "x-bce-storage-class": "STANDARD_IA"
+ *   }
+ * );
+ * ```
+ *
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/Lkc5p9g3w
+ * @param {string} sourceBucketName 源存储桶名称
+ * @param {string} sourceKey 源对象名称（对象全路径）
+ * @param {string} targetBucketName 目标存储桶名称
+ * @param {string} targetKey 目标对象名称（对象全路径）
+ * @param {OptionsType=} options
+ * @returns
+ */
 BosClient.prototype.copyObject = function (sourceBucketName, sourceKey, targetBucketName, targetKey, options) {
   /* eslint-disable */
   if (!sourceBucketName) {
@@ -1119,7 +1343,14 @@ BosClient.prototype.copyObject = function (sourceBucketName, sourceKey, targetBu
       return true;
     }
   });
+
+  /** 源Object地址 */
   options.headers['x-bce-copy-source'] = strings.normalize(util.format('/%s/%s', sourceBucketName, sourceKey), false);
+  /** 如果指定了versionId参数，则将versionId拼接到copy-source参数中 */
+  if (options.versionId) {
+    options.headers['x-bce-copy-source'] += `?versionId=${options.versionId}`
+  }
+
   if (u.has(options.headers, 'ETag')) {
     options.headers['x-bce-copy-source-if-match'] = options.headers.ETag;
   }
@@ -1138,7 +1369,7 @@ BosClient.prototype.copyObject = function (sourceBucketName, sourceKey, targetBu
  *
  * @param {string} bucketName 存储桶名称
  * @param {string} key 对象名称（对象全路径）
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  */
 BosClient.prototype.initiateMultipartUpload = function (bucketName, key, options) {
   options = options || {};
@@ -1175,7 +1406,7 @@ BosClient.prototype.abortMultipartUpload = function (bucketName, key, uploadId, 
  * @param {string} key 对象名称（对象全路径）
  * @param {string} uploadId 上传任务ID，由initiateMultipartUpload返回
  * @param {Array<{ETag: string, PartNumber: number}>} partList 已经上传的Part列表，按照PartNumber升序排列
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  */
 BosClient.prototype.completeMultipartUpload = function (bucketName, key, uploadId, partList, options) {
   var headers = {};
@@ -1202,7 +1433,7 @@ BosClient.prototype.completeMultipartUpload = function (bucketName, key, uploadI
  * @param {number} partSize 分片大小，单位为字节
  * @param {string} filename 文件路径
  * @param {number} offset 文件偏移量，单位为字节
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  */
 BosClient.prototype.uploadPartFromFile = function (
   bucketName,
@@ -1232,7 +1463,7 @@ BosClient.prototype.uploadPartFromFile = function (
  * @param {number} partNumber 文件分片编号，从1开始
  * @param {number} partSize 分片大小，单位为字节
  * @param {Blob} blob Blob对象
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  */
 BosClient.prototype.uploadPartFromBlob = function (bucketName, key, uploadId, partNumber, partSize, blob, options) {
   if (blob.size !== partSize) {
@@ -1268,7 +1499,7 @@ BosClient.prototype.uploadPartFromBlob = function (bucketName, key, uploadId, pa
  * @param {number} partNumber 文件分片编号，从1开始
  * @param {number} partSize 分片大小，单位为字节
  * @param {string} dataUrl DataUrl字符串
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  */
 BosClient.prototype.uploadPartFromDataUrl = function (
   bucketName,
@@ -1313,7 +1544,7 @@ BosClient.prototype.uploadPartFromDataUrl = function (
  * @param {number} partNumber 文件分片编号，从1开始
  * @param {number} partSize 分片大小，单位为字节
  * @param {stream.ReadStream} partFp 文件流
- * @param {Record<string, any>=} options 额外的参数，包含Client配置信息，额外的请求头
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
  */
 BosClient.prototype.uploadPart = function (bucketName, key, uploadId, partNumber, partSize, partFp, options) {
   /* eslint-disable */
@@ -1559,14 +1790,14 @@ BosClient.prototype.signPostObjectPolicy = function (policy) {
 };
 
 /**
- * Post an object.
+ * 使用HTML表单上传文件到指定bucket，用于实现通过浏览器上传文件到bucket。在PutObject操作中通过HTTP请求头传递参数，在PostObject操作中使用消息实体中的表单域传递参数，其中消息实体使用多重表单格式（multipart/form-data）编码
  *
- * @see {http://wiki.baidu.com/pages/viewpage.action?pageId=161461681}
- *
+ * @see http://wiki.baidu.com/pages/viewpage.action?pageId=161461681
+ * @doc https://cloud.baidu.com/doc/BOS/s/akc5orrn5
  * @param {string} bucketName The bucket name.
  * @param {string} key The object name.
  * @param {string|Buffer} data The file raw data or file path.
- * @param {Object} options The form fields.
+ * @param {OptionsType} options The form fields.
  * @return {Promise}
  */
 BosClient.prototype.postObject = function (bucketName, key, data, options) {
@@ -2021,6 +2252,10 @@ BosClient.prototype._checkOptions = function (options, allowedParams) {
   rv.headers = this._prepareObjectHeaders(options);
   rv.params = u.pick(options, allowedParams || []);
 
+  if (options.versionId && typeof options.versionId === 'string') {
+    rv.versionId = options.versionId;
+  }
+
   /** 如果使用callback参数格式传入，将参数处理为字符串格式 */
   if (!u.has(options, H.X_BCE_PROCESS) && u.has(options, 'callback')) {
     const callbackParams = u.extend(
@@ -2253,12 +2488,12 @@ BosClient.prototype.putSuperObject = function (params) {
  * @doc https://cloud.baidu.com/doc/BOS/s/Xkc4jkho7
  */
 BosClient.prototype.initBucketObjectLock = function (bucketName, body, options) {
-  options = options || {};
-  body = u.pick(body || {}, ['retentionDays']);
-
   if (!bucketName) {
     throw new TypeError('bucketName should not be empty.');
   }
+
+  options = this._checkOptions(options || {});
+  body = u.pick(body || {}, ['retentionDays']);
 
   if (!body.retentionDays) {
     throw new TypeError('retentionDays should not be empty.');
@@ -2297,11 +2532,11 @@ BosClient.prototype.getBucketObjectLock = function (bucketName, options) {
  * @doc https://cloud.baidu.com/doc/BOS/s/rkc4lrfw8
  */
 BosClient.prototype.deleteBucketObjectLock = function (bucketName, options) {
-  options = options || {};
-
   if (!bucketName) {
     throw new TypeError('bucketName should not be empty.');
   }
+
+  options = this._checkOptions(options || {});
 
   return this.sendRequest('DELETE', {
     bucketName: bucketName,
@@ -2316,12 +2551,12 @@ BosClient.prototype.deleteBucketObjectLock = function (bucketName, options) {
  * @doc https://cloud.baidu.com/doc/BOS/s/okc4ltaed
  */
 BosClient.prototype.extendBucketObjectLock = function (bucketName, body, options) {
-  options = options || {};
-  body = u.pick(body || {}, ['extendRetentionDays']);
-
   if (!bucketName) {
     throw new TypeError('bucketName should not be empty.');
   }
+
+  options = this._checkOptions(options || {});
+  body = u.pick(body || {}, ['extendRetentionDays']);
 
   if (!body.extendRetentionDays) {
     throw new TypeError('extendRetentionDays should not be empty.');
@@ -2341,15 +2576,71 @@ BosClient.prototype.extendBucketObjectLock = function (bucketName, body, options
  * @doc https://cloud.baidu.com/doc/BOS/s/xkc4lsd70
  */
 BosClient.prototype.completeBucketObjectLock = function (bucketName, options) {
-  options = options || {};
-
   if (!bucketName) {
     throw new TypeError('bucketName should not be empty.');
   }
 
+  options = this._checkOptions(options || {});
+
+
   return this.sendRequest('POST', {
     bucketName: bucketName,
     params: {completeobjectlock: ''},
+    config: options.config,
+    headers: options.headers
+  });
+};
+
+/**
+ * 获取Bucket的version状态。
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/zlxucuoxg
+ * @param {string} bucketName Bucket Name
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
+BosClient.prototype.getBucketVersioning = function (bucketName, options) {
+  if (!bucketName) {
+    throw new TypeError('bucketName should not be empty.');
+  }
+
+  options = this._checkOptions(options || {});
+
+  return this.sendRequest('GET', {
+    bucketName: bucketName,
+    params: {versioning: ''},
+    config: options.config,
+    headers: options.headers
+  });
+};
+
+/**
+ * 设置指定存储空间（Bucket）的版本控制状态。
+ *
+ * @doc https://cloud.baidu.com/doc/BOS/s/flxucacoe
+ *
+ * @param {string} bucketName Bucket Name
+ * @param {string} status 存储桶的多版本状态：开启（'enabled'）、暂停（ 'suspended'）或未开启（'notEnabled'）
+ * @param {OptionsType=} options 额外的参数，包含Client配置信息，额外的请求头
+ */
+BosClient.prototype.putBucketVersioning = function (bucketName, status, options) {
+  if (!bucketName) {
+    throw new TypeError('bucketName should not be empty.');
+  }
+
+  if (!status) {
+    throw new TypeError('status should not be empty.');
+  }
+
+  if (!['enabled', 'notEnabled', 'suspended'].includes(status)) {
+    throw new TypeError('status should be one of "enabled", "notEnabled", "suspended"');
+  }
+
+  options = this._checkOptions(options || {});
+
+  return this.sendRequest('PUT', {
+    bucketName: bucketName,
+    params: {versioning: ''},
+    body: JSON.stringify({status: status}),
     config: options.config,
     headers: options.headers
   });
