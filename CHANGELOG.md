@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 1.0.6 (latest)
+
+_published on 2025-06-20_
+
+- feat:
+
+  - add `listObjectVersions`、`getBucketVersioning`、`putBucketVersioning`、`_headBucket` APIs
+  - support versioning related APIs: `getObject`、`getObjectMetadata`、`deleteObject`、`deleteMultipleObjects`、`copyObject`
+  - support `'x-bce-version-id'` header
+
+- fix:
+
+  - `putSuperObject` paused task without immediately canceling request;
+
+- chore:
+  - add `x-bce-debug-id` in error response body;
+
 ## 1.0.5-beta.3
 
 _published on 2025-05-27_

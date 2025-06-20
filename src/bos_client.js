@@ -87,7 +87,7 @@ var IMAGE_DOMAIN = 'bceimg.com';
  * 3. 包含Clinet配置信息，平铺到options对象中
  *
  * @typedef {{
- *   versionId?: string,   // 对象版本ID，仅支持getObject、getObjectMetadata
+ *   versionId?: string,   // 对象版本ID，仅支持getObject、getObjectMetadata、deleteObject、copyObject请求传入
  *   [key: string]: any    // 额外的参数，包含请求头、Clinet配置信息等
  * }} OptionsType
  */
