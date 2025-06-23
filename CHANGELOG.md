@@ -1,6 +1,13 @@
 # CHANGELOG
 
-## 1.0.6 (latest)
+## 1.0.7 (latest)
+
+_published on 2025-06-23_
+
+- fix:
+  - `deleteObject` request args not passing `versionId`
+
+## 1.0.6
 
 _published on 2025-06-20_
 
