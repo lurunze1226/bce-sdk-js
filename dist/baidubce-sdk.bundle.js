@@ -58609,7 +58609,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":168}],426:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -61463,7 +61463,14 @@ BosClient.prototype.deleteMultipleObjects = function (bucketName, objects, optio
  *
  * 多版本示例:
  * ```js
+ * // 永久删除指定版本的Object
  * const response = await client.deleteObject("Bucket", "ObjectName", {versionId: 'AISQpTmwRHU='});
+ *
+ * // 临时删除当前版本的Object（不指定versionId），新增版本ID为"null"的Object
+ * const response = await client.deleteObject("Bucket", "ObjectName");
+ *
+ * // 删除版本ID为"null"的Object
+ * const response = await client.deleteObject("Bucket", "ObjectName", {versionId: 'null'});
  * ```
  *
  * @doc https://cloud.baidu.com/doc/BOS/s/bkc5tsslq
@@ -61484,11 +61491,7 @@ BosClient.prototype.deleteObject = function (bucketName, key, options) {
       versionId: options.versionId
     };
   }
-  return this.sendRequest('DELETE', {
-    bucketName: bucketName,
-    key: key,
-    config: options.config
-  });
+  return this.sendRequest('DELETE', reqArgs);
 };
 
 /**
