@@ -58609,7 +58609,7 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":168}],426:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.7",
+  "version": "1.0.8-beta.1",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
@@ -64979,7 +64979,7 @@ var isIpHost = function isIpHost(host) {
 var isBosHost = function isBosHost(host) {
   var domain = _getHostname(host);
   var arr = domain.split('.');
-  if (domain === 'bj-bos-sandbox.baidu-int.com') {
+  if (/-bos-sandbox\.baidu-int\.com$/.test(domain)) {
     return true;
   }
   if (arr.length !== 3) {

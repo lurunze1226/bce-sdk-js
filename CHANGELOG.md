@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.0.8-beta.1
+
+_published on 2025-08-19_
+
+- fix:
+  - virtual host domain for sandbox
+
 ## 1.0.7 (latest)
 
 _published on 2025-06-23_
