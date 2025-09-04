@@ -58609,13 +58609,13 @@ exports.createContext = Script.createContext = function (context) {
 },{"indexof":168}],426:[function(require,module,exports){
 module.exports={
   "name": "@baiducloud/sdk",
-  "version": "1.0.8-beta.1",
+  "version": "1.0.8-beta.2",
   "description": "Baidu Cloud Engine JavaScript SDK",
   "main": "./index.js",
   "browser": {
     "fs": false,
     "net": "./src/browser/net.js",
-    "index.js": "./dist/baidubce-sdk.bundle.js"
+    "index.js": "./dist/baidubce-sdk.bundle.min.js"
   },
   "files": [
     "dist/",

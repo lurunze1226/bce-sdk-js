@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.8-beta.2
+
+_published on 2025-09-04_
+
+- Chore: The browser env defaults to using a compressed version. [@wkstudy](https://github.com/wkstudy)
+
 ## 1.0.8-beta.1
 
 _published on 2025-08-19_
