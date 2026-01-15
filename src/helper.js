@@ -351,19 +351,20 @@ const generateBaseEndpoint = function (protocol, region) {
  */
 const handleEndpoint = function ({
   bucketName,
-  endpoint, 
+  endpoint,
   protocol,
   region,
   customGenerateUrl,
-  cname_enabled=false,
-  pathStyleEnable=false,
+  lccLocation,
+  cname_enabled = false,
+  pathStyleEnable = false,
 }) {
   var resolvedEndpoint = endpoint;
   // 有自定义域名函数
   if (customGenerateUrl) {
-    return customGenerateUrl(bucketName, region);
+    return customGenerateUrl(bucketName, region, {lccLocation});
   }
-  
+
   // 使用的是自定义域名 / virtual-host
   if (isCnameLikeHost(resolvedEndpoint) || cname_enabled) {
     // if virtual host endpoint and bucket is not empty, compatible bucket and endpoint
